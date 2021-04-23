@@ -16,7 +16,7 @@ logging.basicConfig(
 
 class Client:
 
-    def __init__(self, name, port, ip):
+    def __init__(self, name, ip, port):
         self.name = name
         self.addr = (ip, port)
         self.socket = zmq.asyncio.Context().socket(zmq.DEALER)
@@ -47,6 +47,7 @@ class Client:
             print(f' [{data["name"]}] {data["text"]}', end='', flush=True)
 
     async def disconnect(self):
+        # notify server that client is out
         await self.socket.send_json(
             {
                 'auth': 0,
@@ -54,18 +55,22 @@ class Client:
             }
         )
 
+        # close sokcet
+        self.socket.close()
+        logging.info('Closed socket')
+
     def start(self, loop):
-        loop.create_task(self.run_receiver())
-        loop.create_task(self.run_sender())
+        loop.create_task(self.run_receiver(), name='receiver')
+        loop.create_task(self.run_sender(), name='sender')
 
 
 if __name__ == '__main__':
     from argparse import ArgumentParser
 
     parser = ArgumentParser()
-    parser.add_argument('--port', help='Server port')
-    parser.add_argument('--ip', default='localhost', help='Server IP')
     parser.add_argument('--name', default='server', help='Client name')
+    parser.add_argument('--ip', default='localhost', help='Server IP')
+    parser.add_argument('--port', help='Server port')
     args = parser.parse_args()
 
     client = Client(
@@ -78,6 +83,6 @@ if __name__ == '__main__':
         loop = asyncio.get_event_loop()
         client.start(loop)
         loop.run_forever()
-    except KeyboardInterrupt:
+    except KeyboardInterrupt:   # TODO exit clean in KeyboardInterrupt
         asyncio.run(client.disconnect())
         logging.info('Stopped by user!')
