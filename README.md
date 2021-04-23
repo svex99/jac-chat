@@ -17,15 +17,15 @@ Sin embargo a diferencia del servidor de `0mq-chat`, el cual desde un mismo hilo
 
 ## Implementación
 
-El servidor mutihilo implementado tiene la siguiente estructura.
+El servidor multihilo implementado tiene la siguiente estructura.
 
 ![](docs/jac-chat.jpeg)
 
-### Funcionamiento
-- El servidor inicia un conjunto de hilos que serán workers. Cada worker crea un socket `DEALER` y luego procesa requests en este socket. Los sockets en los worker se comunican vía `inproc` con el hilo principal.
-- El servidor crea un socket `ROUTER` para comunicarse con los clientes y lo vincula a su interfaz externa vía `tcp`.
-- El servidor crea un socket `DEALER` para comunicarse con los workers y lo vincula a su interfaz interna vía `inproc`.
-- Finalmente el servidor inicia un un proxy (cola) que conecta los dos sockets. El proxy recibe las peticiones entrantes desde los clientes y las distribuye a los workers. También se encarga de enrutar las respuestas de los workers a su destino.
+### Funcionamiento del servidor
+1. Inicia un conjunto de hilos que serán workers. Cada worker crea un socket `DEALER` y luego procesa requests en este socket. Los sockets en los worker se comunican vía `inproc` con el hilo principal.
+2. Crea un socket `ROUTER` para comunicarse con los clientes y lo vincula a su interfaz externa vía `tcp`.
+3. Crea un socket `DEALER` para comunicarse con los workers y lo vincula a su interfaz interna vía `inproc`.
+4. Finalmente inicia un un proxy (cola) que conecta los dos sockets. El proxy recibe las peticiones entrantes desde los clientes y las distribuye a los workers. También se encarga de enrutar las respuestas de los workers a su destino.
 
 Se emplean sockets de tipo `DEALER` en los clientes porque al igual que en `0mq-chat` no se espera que los clientes reciban ack de el mensaje que han enviado.
 
